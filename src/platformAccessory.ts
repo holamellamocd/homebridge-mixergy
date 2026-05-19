@@ -29,12 +29,13 @@ const INPUT_SOURCES: Array<{ id: number; name: string; subtype: string }> = [
 export class MixergyTankAccessory {
   private temperatureService: Service | null;
   private humidityService: Service;
-  private switchService: Service;
+  private lightbulbService: Service;
   private televisionService: Service;
 
   private state = {
     temperature: 20,
     charge: 0,
+    chargeTarget: 100,
     isCharging: false,
     heatSourceId: 1,
   };
@@ -79,21 +80,39 @@ export class MixergyTankAccessory {
       .getCharacteristic(Characteristic.CurrentRelativeHumidity)
       .onGet(() => this.state.charge);
 
-    // ── Switch → start / stop heating ────────────────────────────────────────
-    this.switchService = accessory.getService(Service.Switch)
-      ?? accessory.addService(Service.Switch, 'Heating');
-    this.switchService.setCharacteristic(Characteristic.Name, 'Heating');
-    this.switchService
+    // ── Lightbulb → heating on/off + charge target (brightness) ─────────────
+    this.state.chargeTarget = this.platform.config.onChargeTarget ?? 100;
+    const existingSwitch = accessory.getService(Service.Switch);
+    if (existingSwitch) accessory.removeService(existingSwitch);
+    this.lightbulbService = accessory.getService(Service.Lightbulb)
+      ?? accessory.addService(Service.Lightbulb, 'Heating');
+    this.lightbulbService.setCharacteristic(Characteristic.Name, 'Heating');
+    this.lightbulbService
       .getCharacteristic(Characteristic.On)
       .onGet(() => this.state.isCharging)
       .onSet(async (value: CharacteristicValue) => {
         const on = value as boolean;
-        const target = on ? (this.platform.config.onChargeTarget ?? 100) : 0;
+        const target = on ? this.state.chargeTarget : 0;
         try {
           await this.platform.api.setCharge(this.tank.id, target);
           this.state.isCharging = on;
         } catch (err) {
           this.platform.log.error(`Failed to set charge for ${this.tank.serialNumber}:`, err);
+        }
+      });
+    this.lightbulbService
+      .getCharacteristic(Characteristic.Brightness)
+      .onGet(() => this.state.chargeTarget)
+      .onSet(async (value: CharacteristicValue) => {
+        const target = value as number;
+        this.state.chargeTarget = target;
+        if (this.state.isCharging) {
+          try {
+            await this.platform.api.setCharge(this.tank.id, target);
+            this.platform.log.debug(`[${this.tank.displayName}] charge target → ${target}%`);
+          } catch (err) {
+            this.platform.log.error(`Failed to set charge target for ${this.tank.serialNumber}:`, err);
+          }
         }
       });
 
@@ -177,6 +196,9 @@ export class MixergyTankAccessory {
       // target_charge not always present; fall back to checking active heat sources
       if (measurement.target_charge !== undefined) {
         this.state.isCharging = measurement.target_charge > 0;
+        if (measurement.target_charge > 0) {
+          this.state.chargeTarget = measurement.target_charge;
+        }
       } else {
         const s = parseState(measurement.state);
         this.state.isCharging = s.electricHeatSource || s.indirectHeatSource || s.heatPumpHeatSource;
@@ -197,9 +219,12 @@ export class MixergyTankAccessory {
         .getCharacteristic(Characteristic.CurrentRelativeHumidity)
         .updateValue(this.state.charge);
 
-      this.switchService
+      this.lightbulbService
         .getCharacteristic(Characteristic.On)
         .updateValue(this.state.isCharging);
+      this.lightbulbService
+        .getCharacteristic(Characteristic.Brightness)
+        .updateValue(this.state.chargeTarget);
 
       this.televisionService
         .getCharacteristic(Characteristic.ActiveIdentifier)

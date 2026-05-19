@@ -29,11 +29,12 @@
         "maximum": 300
       },
       "onChargeTarget": {
-        "title": "Charge target when switch turned ON (%)",
+        "title": "Default charge target (%)",
         "type": "integer",
         "default": 100,
-        "minimum": 10,
-        "maximum": 100
+        "minimum": 1,
+        "maximum": 100,
+        "description": "Initial charge target on first setup. After that, use the brightness slider in the Home app to set the target."
       },
       "lowChargeThreshold": {
         "title": "Low charge warning threshold (%)",
