@@ -93,10 +93,20 @@ export class MixergyApi {
       await this.authenticate();
       const retry = await fetch(url, { ...options, headers: this.authHeaders() });
       if (!retry.ok) throw new Error(`Request failed after re-auth: ${retry.status}`);
-      return retry.json() as Promise<T>;
+      return this.parseResponse<T>(retry);
     }
     if (!res.ok) throw new Error(`Request failed: ${res.status} ${res.statusText}`);
-    return res.json() as Promise<T>;
+    return this.parseResponse<T>(res);
+  }
+
+  private async parseResponse<T>(res: Response): Promise<T> {
+    const contentLength = res.headers.get('content-length');
+    if (res.status === 204 || contentLength === '0') {
+      return undefined as unknown as T;
+    }
+    const text = await res.text();
+    if (!text) return undefined as unknown as T;
+    return JSON.parse(text) as T;
   }
 
   async getTanks(): Promise<MixergyTank[]> {
