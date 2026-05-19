@@ -106,13 +106,15 @@ export class MixergyTankAccessory {
       .onSet(async (value: CharacteristicValue) => {
         const target = value as number;
         this.state.chargeTarget = target;
-        if (this.state.isCharging) {
-          try {
-            await this.platform.api.setCharge(this.tank.id, target);
-            this.platform.log.debug(`[${this.tank.displayName}] charge target → ${target}%`);
-          } catch (err) {
-            this.platform.log.error(`Failed to set charge target for ${this.tank.serialNumber}:`, err);
-          }
+        try {
+          await this.platform.api.setCharge(this.tank.id, target);
+          this.state.isCharging = target > 0;
+          this.lightbulbService
+            .getCharacteristic(Characteristic.On)
+            .updateValue(this.state.isCharging);
+          this.platform.log.debug(`[${this.tank.displayName}] charge target → ${target}%`);
+        } catch (err) {
+          this.platform.log.error(`Failed to set charge target for ${this.tank.serialNumber}:`, err);
         }
       });
 
