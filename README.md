@@ -6,8 +6,8 @@ Exposes your Mixergy tank to Apple HomeKit so you can monitor and control it fro
 
 ## Features
 
-- **Water Temperature** — current hot water temperature at the top of the tank (°C)
-- **Tank Charge** — hot water level as a 0–100% battery gauge, with a low-water alert (configurable threshold)
+- **Tank Charge** — hot water level displayed as a 0–100% value directly on the accessory tile
+- **Water Temperature** — current hot water temperature at the top of the tank (°C), optional
 - **Heating switch** — turn heating on (charges to a target %) or off
 - **Heat Source selector** — choose between Electric, Indirect, and Heat Pump using a native HomeKit input picker
 
@@ -33,7 +33,7 @@ Add the following to the `platforms` array in your Homebridge `config.json`:
   "password": "yourpassword",
   "pollIntervalSeconds": 30,
   "onChargeTarget": 100,
-  "lowChargeThreshold": 20
+  "showTemperatureSensor": true
 }
 ```
 
@@ -45,18 +45,20 @@ Add the following to the `platforms` array in your Homebridge `config.json`:
 | `password` | — | Your Mixergy account password |
 | `pollIntervalSeconds` | `30` | How often to fetch tank data (10–300 seconds) |
 | `onChargeTarget` | `100` | Charge % to request when the Heating switch is turned on |
-| `lowChargeThreshold` | `20` | Charge % below which the low-water alert triggers |
+| `showTemperatureSensor` | `true` | Set to `false` to hide the temperature tile (it can appear misleadingly as an air temperature sensor in the Home app) |
 
 ## HomeKit services
 
-Each tank appears as a single accessory with four services:
+Each tank appears as a single accessory with up to four services:
 
 | Service | What it shows |
 |---|---|
-| Temperature Sensor | Hot water temperature at the top of the tank |
-| Battery | Tank charge level (0–100%), charging state, low-water alert |
+| Humidity Sensor | Tank charge level (0–100%) — displayed prominently on the accessory tile |
+| Temperature Sensor | Hot water temperature at the top of the tank (optional, see config) |
 | Switch | Heating on/off |
 | Television (input) | Active heat source — Electric, Indirect, or Heat Pump |
+
+> The tank charge is exposed as a Humidity Sensor rather than a Battery so the percentage appears directly on the tile in the Home app, rather than being buried in the accessory detail view.
 
 > The heat source selector uses the HomeKit Television input API, which gives a proper multi-option picker in the Home app. This is a common pattern for accessories that need a "select one of N" control.
 
