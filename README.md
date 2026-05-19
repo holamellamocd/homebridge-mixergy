@@ -32,7 +32,6 @@ Add the following to the `platforms` array in your Homebridge `config.json`:
   "username": "your@email.com",
   "password": "yourpassword",
   "pollIntervalSeconds": 30,
-  "onChargeTarget": 100,
   "showTemperatureSensor": true
 }
 ```
@@ -44,7 +43,6 @@ Add the following to the `platforms` array in your Homebridge `config.json`:
 | `username` | — | Your Mixergy account email |
 | `password` | — | Your Mixergy account password |
 | `pollIntervalSeconds` | `30` | How often to fetch tank data (10–300 seconds) |
-| `onChargeTarget` | `100` | Initial default charge target % (after first setup, use the brightness slider in the Home app to change it) |
 | `showTemperatureSensor` | `true` | Set to `false` to hide the temperature tile (it can appear misleadingly as an air temperature sensor in the Home app) |
 
 ## HomeKit services

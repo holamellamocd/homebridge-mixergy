@@ -81,7 +81,7 @@ export class MixergyTankAccessory {
       .onGet(() => this.state.charge);
 
     // ── Lightbulb → heating on/off + charge target (brightness) ─────────────
-    this.state.chargeTarget = this.platform.config.onChargeTarget ?? 100;
+    this.state.chargeTarget = 100;
     const existingSwitch = accessory.getService(Service.Switch);
     if (existingSwitch) accessory.removeService(existingSwitch);
     this.lightbulbService = accessory.getService(Service.Lightbulb)

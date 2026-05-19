@@ -15,7 +15,6 @@ export interface MixergyConfig extends PlatformConfig {
   username: string;
   password: string;
   pollIntervalSeconds?: number;
-  onChargeTarget?: number;
   lowChargeThreshold?: number;
   showTemperatureSensor?: boolean;
 }
