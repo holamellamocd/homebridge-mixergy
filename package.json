@@ -1,0 +1,32 @@
+{
+  "name": "homebridge-mixergy",
+  "version": "1.0.0",
+  "description": "Homebridge plugin for Mixergy smart hot water cylinders",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint src/"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "mixergy",
+    "hot-water",
+    "smart-home"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "homebridge": ">=1.6.0"
+  },
+  "peerDependencies": {
+    "homebridge": ">=1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "homebridge": "^1.8.0",
+    "typescript": "^5.0.0"
+  }
+}

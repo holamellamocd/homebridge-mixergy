@@ -1,0 +1,47 @@
+{
+  "pluginAlias": "Mixergy",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "Mixergy",
+        "required": true
+      },
+      "username": {
+        "title": "Mixergy Username (email)",
+        "type": "string",
+        "required": true
+      },
+      "password": {
+        "title": "Mixergy Password",
+        "type": "string",
+        "required": true
+      },
+      "pollIntervalSeconds": {
+        "title": "Poll Interval (seconds)",
+        "type": "integer",
+        "default": 30,
+        "minimum": 10,
+        "maximum": 300
+      },
+      "onChargeTarget": {
+        "title": "Charge target when switch turned ON (%)",
+        "type": "integer",
+        "default": 100,
+        "minimum": 10,
+        "maximum": 100
+      },
+      "lowChargeThreshold": {
+        "title": "Low charge warning threshold (%)",
+        "type": "integer",
+        "default": 20,
+        "minimum": 5,
+        "maximum": 50
+      }
+    }
+  }
+}
