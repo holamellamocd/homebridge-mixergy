@@ -28,7 +28,7 @@ const INPUT_SOURCES: Array<{ id: number; name: string; subtype: string }> = [
 
 export class MixergyTankAccessory {
   private temperatureService: Service;
-  private batteryService: Service;
+  private humidityService: Service;
   private switchService: Service;
   private televisionService: Service;
 
@@ -60,28 +60,15 @@ export class MixergyTankAccessory {
       .getCharacteristic(Characteristic.CurrentTemperature)
       .onGet(() => this.state.temperature);
 
-    // ── Battery → charge level ────────────────────────────────────────────────
-    this.batteryService = accessory.getService(Service.Battery)
-      ?? accessory.addService(Service.Battery, 'Tank Charge');
-    this.batteryService.setCharacteristic(Characteristic.Name, 'Tank Charge');
-    this.batteryService
-      .getCharacteristic(Characteristic.BatteryLevel)
+    // ── Humidity sensor → tank charge level (shows % on tile) ────────────────
+    const existingBattery = accessory.getService(Service.Battery);
+    if (existingBattery) accessory.removeService(existingBattery);
+    this.humidityService = accessory.getService(Service.HumiditySensor)
+      ?? accessory.addService(Service.HumiditySensor, 'Tank Charge');
+    this.humidityService.setCharacteristic(Characteristic.Name, 'Tank Charge');
+    this.humidityService
+      .getCharacteristic(Characteristic.CurrentRelativeHumidity)
       .onGet(() => this.state.charge);
-    this.batteryService
-      .getCharacteristic(Characteristic.StatusLowBattery)
-      .onGet(() => {
-        const threshold = this.platform.config.lowChargeThreshold ?? 20;
-        return this.state.charge < threshold
-          ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
-          : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL;
-      });
-    this.batteryService
-      .getCharacteristic(Characteristic.ChargingState)
-      .onGet(() =>
-        this.state.isCharging
-          ? Characteristic.ChargingState.CHARGING
-          : Characteristic.ChargingState.NOT_CHARGING,
-      );
 
     // ── Switch → start / stop heating ────────────────────────────────────────
     this.switchService = accessory.getService(Service.Switch)
@@ -96,13 +83,6 @@ export class MixergyTankAccessory {
         try {
           await this.platform.api.setCharge(this.tank.id, target);
           this.state.isCharging = on;
-          this.batteryService
-            .getCharacteristic(Characteristic.ChargingState)
-            .updateValue(
-              on
-                ? Characteristic.ChargingState.CHARGING
-                : Characteristic.ChargingState.NOT_CHARGING,
-            );
         } catch (err) {
           this.platform.log.error(`Failed to set charge for ${this.tank.serialNumber}:`, err);
         }
@@ -202,26 +182,9 @@ export class MixergyTankAccessory {
         .getCharacteristic(Characteristic.CurrentTemperature)
         .updateValue(this.state.temperature);
 
-      this.batteryService
-        .getCharacteristic(Characteristic.BatteryLevel)
+      this.humidityService
+        .getCharacteristic(Characteristic.CurrentRelativeHumidity)
         .updateValue(this.state.charge);
-
-      const threshold = this.platform.config.lowChargeThreshold ?? 20;
-      this.batteryService
-        .getCharacteristic(Characteristic.StatusLowBattery)
-        .updateValue(
-          this.state.charge < threshold
-            ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
-            : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL,
-        );
-
-      this.batteryService
-        .getCharacteristic(Characteristic.ChargingState)
-        .updateValue(
-          this.state.isCharging
-            ? Characteristic.ChargingState.CHARGING
-            : Characteristic.ChargingState.NOT_CHARGING,
-        );
 
       this.switchService
         .getCharacteristic(Characteristic.On)
