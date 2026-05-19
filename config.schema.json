@@ -41,6 +41,12 @@
         "default": 20,
         "minimum": 5,
         "maximum": 50
+      },
+      "showTemperatureSensor": {
+        "title": "Show water temperature sensor",
+        "type": "boolean",
+        "default": true,
+        "description": "Disable to hide the temperature tile in the Home app (it can appear misleadingly as an air temperature thermostat)"
       }
     }
   }

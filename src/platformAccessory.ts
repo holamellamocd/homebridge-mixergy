@@ -27,7 +27,7 @@ const INPUT_SOURCES: Array<{ id: number; name: string; subtype: string }> = [
 ];
 
 export class MixergyTankAccessory {
-  private temperatureService: Service;
+  private temperatureService: Service | null;
   private humidityService: Service;
   private switchService: Service;
   private televisionService: Service;
@@ -52,13 +52,22 @@ export class MixergyTankAccessory {
       .setCharacteristic(Characteristic.Model, 'Smart Hot Water Cylinder')
       .setCharacteristic(Characteristic.SerialNumber, tank.serialNumber);
 
-    // ── Temperature sensor ────────────────────────────────────────────────────
-    this.temperatureService = accessory.getService(Service.TemperatureSensor)
-      ?? accessory.addService(Service.TemperatureSensor, 'Water Temperature');
-    this.temperatureService.setCharacteristic(Characteristic.Name, 'Water Temperature');
-    this.temperatureService
-      .getCharacteristic(Characteristic.CurrentTemperature)
-      .onGet(() => this.state.temperature);
+    // ── Temperature sensor (optional) ─────────────────────────────────────────
+    const showTemp = this.platform.config.showTemperatureSensor !== false;
+    const existingTemp = accessory.getService(Service.TemperatureSensor);
+    if (!showTemp && existingTemp) {
+      accessory.removeService(existingTemp);
+      this.temperatureService = null;
+    } else if (showTemp) {
+      this.temperatureService = existingTemp
+        ?? accessory.addService(Service.TemperatureSensor, 'Water Temperature');
+      this.temperatureService.setCharacteristic(Characteristic.Name, 'Water Temperature');
+      this.temperatureService
+        .getCharacteristic(Characteristic.CurrentTemperature)
+        .onGet(() => this.state.temperature);
+    } else {
+      this.temperatureService = null;
+    }
 
     // ── Humidity sensor → tank charge level (shows % on tile) ────────────────
     const existingBattery = accessory.getService(Service.Battery);
@@ -178,9 +187,11 @@ export class MixergyTankAccessory {
         this.state.heatSourceId = ID_BY_HEAT_SOURCE[hs] ?? this.state.heatSourceId;
       }
 
-      this.temperatureService
-        .getCharacteristic(Characteristic.CurrentTemperature)
-        .updateValue(this.state.temperature);
+      if (this.temperatureService) {
+        this.temperatureService
+          .getCharacteristic(Characteristic.CurrentTemperature)
+          .updateValue(this.state.temperature);
+      }
 
       this.humidityService
         .getCharacteristic(Characteristic.CurrentRelativeHumidity)

@@ -17,6 +17,7 @@ export interface MixergyConfig extends PlatformConfig {
   pollIntervalSeconds?: number;
   onChargeTarget?: number;
   lowChargeThreshold?: number;
+  showTemperatureSensor?: boolean;
 }
 
 export class MixergyPlatform implements DynamicPlatformPlugin {
