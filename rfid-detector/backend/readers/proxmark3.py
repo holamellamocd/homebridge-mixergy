@@ -3,7 +3,19 @@ import logging
 import re
 import threading
 
+from . import usb_vid
 from .base import BaseReader, CardInfo
+
+# USB vendor IDs that belong to Proxmark3 hardware.
+_PM3_VIDS: frozenset[int] = frozenset({
+    0x9AC4,  # iceman RDV4
+    0x2D99,  # older Proxmark3
+})
+
+# USB vendor IDs that are common USB-serial bridge chips used in UHF readers
+# (FTDI, CH340, CP210x, PL2303).  Ports with these VIDs and no PM3 match are
+# almost certainly NOT a Proxmark3 and should be left for the UHF reader.
+_UHF_BRIDGE_VIDS: frozenset[int] = frozenset({0x0403, 0x1A86, 0x10C4, 0x067B})
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +62,14 @@ LF_PROTOCOLS = [
 
 
 def find_proxmark3_ports() -> list[str]:
-    ports = []
-    for pattern in ("/dev/ttyACM*", "/dev/ttyUSB*"):
-        ports.extend(sorted(glob.glob(pattern)))
+    ports: list[str] = []
+    # ttyACM* devices are always CDC-ACM (modern PM3 RDV4 firmware).
+    ports.extend(sorted(glob.glob("/dev/ttyACM*")))
+    # ttyUSB* — only include if VID matches known PM3 or VID is unreadable.
+    for port in sorted(glob.glob("/dev/ttyUSB*")):
+        vid = usb_vid(port)
+        if vid is None or vid in _PM3_VIDS:
+            ports.append(port)
     return ports
 
 

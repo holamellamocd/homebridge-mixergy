@@ -5,6 +5,7 @@ import time
 
 from readers.pcsc import PCSCReader, list_pcsc_readers
 from readers.proxmark3 import Proxmark3Reader, find_proxmark3_ports
+from readers.uhf import UHFReader, find_uhf_candidate_ports
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,9 @@ class ReaderManager:
 
         for name in list_pcsc_readers():
             candidates.append((name, lambda n=name: PCSCReader(n)))
+
+        for port in find_uhf_candidate_ports():
+            candidates.append((port, lambda p=port: UHFReader(p)))
 
         for reader_id, factory in candidates:
             with self._lock:

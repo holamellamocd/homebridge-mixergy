@@ -99,7 +99,9 @@ function buildReaderCard(reader) {
   el.className   = "reader-card";
   el.dataset.readerId = reader.id;
 
-  const icon = reader.type === "proxmark3" ? "🔬" : "📻";
+  const icon = reader.type === "proxmark3" ? "🔬"
+             : reader.type === "uhf"       ? "📶"
+             :                              "📻";
 
   el.innerHTML = `
     <div class="card-header">
@@ -136,8 +138,9 @@ function onCardDetected(readerId, card) {
   if (!el) return;
 
   const isHF      = card.frequency.includes("13.56");
-  const freqKey   = isHF ? "hf" : "lf";
-  const cardClass = isHF ? "hf-active" : "lf-active";
+  const isUHF     = card.frequency.includes("860");
+  const freqKey   = isHF ? "hf" : isUHF ? "uhf" : "lf";
+  const cardClass = isHF ? "hf-active" : isUHF ? "uhf-active" : "lf-active";
 
   // Glow border + flash
   el.className = `reader-card ${cardClass} flash`;
@@ -171,6 +174,9 @@ function onCardDetected(readerId, card) {
   if (raw.card_number)   parts.push(`CN: ${raw.card_number}`);
   if (raw.sak)           parts.push(`SAK: ${raw.sak}`);
   if (raw.atqa)          parts.push(`ATQA: ${raw.atqa}`);
+  if (raw.rssi_dbm != null) parts.push(`RSSI: ${raw.rssi_dbm} dBm`);
+  if (raw.antenna  != null) parts.push(`Ant: ${raw.antenna}`);
+  if (raw.epc_type)      parts.push(raw.epc_type);
   det.querySelector(".extras").innerHTML = parts.map(p => `<span>${h(p)}</span>`).join("");
 
   det.querySelector(".det-time").textContent =
@@ -226,12 +232,15 @@ function renderHistory() {
 
   body.innerHTML = detections.map(({ readerId, card, at }) => {
     const isHF    = card.frequency.includes("13.56");
-    const fk      = isHF ? "hf" : "lf";
+    const isUHF   = card.frequency.includes("860");
+    const fk      = isHF ? "hf" : isUHF ? "uhf" : "lf";
     const raw     = card.raw_details || {};
     const extras  = [];
     if (raw.facility_code) extras.push(`FC:${raw.facility_code}`);
     if (raw.card_number)   extras.push(`CN:${raw.card_number}`);
     if (raw.sak)           extras.push(`SAK:${raw.sak}`);
+    if (raw.rssi_dbm != null) extras.push(`${raw.rssi_dbm} dBm`);
+    if (raw.epc_type)      extras.push(raw.epc_type);
     const readerName = readers[readerId]?.name ?? readerId;
 
     return `<tr>
